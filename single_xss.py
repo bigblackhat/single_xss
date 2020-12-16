@@ -1,7 +1,51 @@
 # coding:utf-8
 import requests
+import copy
 from urlparse import urlparse 
+from time import sleep
 
+_version = 1.1
+_author = "jijue"
+
+class url_parse:
+    def __init__(self,url):
+        if not url.startswith("http://") and not url.startswith("https://"):
+            url = "http://" + url 
+        url_pared = urlparse(url)
+
+        self.params = dict()
+        for i in url_pared.query.split("&"):
+            key = i.split("=")[0]
+            if len(i.split("=")) == 2:
+                value = i.split("=")[1]
+            else:
+                value = ""
+            self.params[key] = value 
+        self.scheme = url_pared.scheme
+        self.host = url_pared.netloc
+        self.path = url_pared.path
+
+def replace_value(payload,paramsdic):
+    newdic = copy.deepcopy(paramsdic)
+    # print type(newdic)
+    for i in newdic.keys():
+        if "*" in newdic[i]:
+            newdic[i] = payload
+    return newdic
+
+def fuzzing(scheme,host,path,paramsdic,GET = True):
+    url = scheme + "://" + host + path 
+    for pay in payloads:
+        sleep(0.5)
+        data = replace_value(pay,paramsdic)
+        if GET:
+            response = requests.get(url,params = data)
+        else:
+            response = requests.post(url,params = data)
+        if pay.lower() in response.text.lower():
+            print "[pass] %s " % (pay)
+
+        
 payloads = ['<svg "ons>', '" onfocus="alert(1);', 'javascript:alert(1)']
 alert = "<script>aleert(1)</script>"
 url = "http://127.0.0.1:8091/level1.php?name=1*&as=1"
@@ -12,43 +56,10 @@ else :
     print "url无法访问 响应码为%d" % (r.status_code)
     exit(0)
 
-vuln = False
 
-for i in payloads:
-    gen_url=url.replace("*",i)
-    if i in requests.get(gen_url).text.encode("utf-8"):
-        vuln = True
-        break
+urlp = url_parse(url)
 
-
-if vuln:
-    print "%s 存在xss，验证POC为 %s" % (url,gen_url)
-
-# def param_parse(url):
-#     if not url.startswith("http://") or not url.startswith("https://"):
-#         url = "http://" + url 
-#     urled = urlparse(url)
-#     param=urled.query.split("&")
-#     params = dict()
-#     for i in param:
-#         query_key = i.split("=")[0]
-#         query_value = i.split("=")[1]
-#         params[query_key] = query_value
-#     # return params
-#     _URL = dict()
-#     _URL["scheme"] = urled.scheme
-#     _URL["host"] = urled.netloc
-#     _URL["path"] = urled.path
-#     _URL["param_list"] = params
-#     return _URL
-
-# Parse_url = param_parse(url)
-
-# if len(Parse_url["param_list"]) >= 1:
-#     for u in Parse_url["param_list"]:
-#         for i in payloads:
-#             Parse_url["param_list"][u] = i 
-#             query = "%s=%s" % (k,v for k in )
-#             gen_url = Parse_url["scheme"] + "://" + Parse_url["host"] + Parse_url["path"] + "?" + u + "=" + i + other_query
-#             if i in requests.get(gen_url).text.encode("utf-8"):
-#                 print "%s is vul" % (url)
+for param_name in urlp.params.keys():
+    paramslist = copy.deepcopy(urlp.params)
+    paramslist[param_name] += "*"
+    fuzzing(urlp.scheme,urlp.host,urlp.path,urlp.params)
