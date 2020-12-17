@@ -106,28 +106,41 @@ def wafdetect(url,params,headers,GET = True):
     else:
         return None
         
+
+
+
+
+
+
+def single_fuzz(url):
+    if requests.get(url).status_code == 200:
+        pass 
+    else :
+        print "url无法访问 响应码为%d" % (r.status_code)
+        exit(0)
+    urlp = url_parse(url)
+
+    _waf = wafdetect(urlp.scheme + "://" + urlp.host + "/" + urlp.path,urlp.params,urlp.headers)
+
+    if _waf:
+        print "WAF detected: %s" % (_waf)
+    else:
+        print "Not Found WAF"
+    for param_name in urlp.params.keys():
+        paramslist = copy.deepcopy(urlp.params)
+        paramslist[param_name] += "*"
+        fuzzing(urlp.scheme,urlp.host,urlp.path,urlp.params)
+
+
+
 payloads = ['<svg "ons>', '" onfocus="alert(1);', 'javascript:alert(1)']
 
-url = "http://127.0.0.1:8091/level1.php?name=1*&as=1"
+# url = "http://127.0.0.1:8091/level1.php?name=1*&as=1"
 
-if requests.get(url).status_code == 200:
-    pass 
-else :
-    print "url无法访问 响应码为%d" % (r.status_code)
-    exit(0)
-
-
-urlp = url_parse(url)
-
-_waf = wafdetect(urlp.scheme + "://" + urlp.host + "/" + urlp.path,urlp.params,urlp.headers)
-
-if _waf:
-    print "WAF detected: %s" % (_waf)
-else:
-    print "Not Found WAF"
-
-for param_name in urlp.params.keys():
-    paramslist = copy.deepcopy(urlp.params)
-    paramslist[param_name] += "*"
-    fuzzing(urlp.scheme,urlp.host,urlp.path,urlp.params)
-
+url = "https://domgo.at/cxss/example/1?payload=abcd&sp=x"
+res = requests.get(url)
+response = res.text
+scripts = re.findall(r'(?i)(?s)<script[^>]*>(.*?)</script>', response)
+# print scripts
+for script in scripts:
+    script = script.split("\n");print script
