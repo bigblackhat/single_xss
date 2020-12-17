@@ -18,3 +18,4 @@
 |项目|思考|
 |-|-|
 |[XssPy](https://github.com/faizann24/XssPy)|通过mechanize模块实现表单识别|
+|[XSStrike](https://github.com/s0md3v/XSStrike)|emmm...反正很棒就对了，暂时只读了fuzz模式|
